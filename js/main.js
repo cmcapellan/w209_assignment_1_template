@@ -1,5 +1,5 @@
-var width = 500,
-  height = 500,
+var width = 800,
+  height = 300,
   svg = d3
     .select("#chart")
     .append("svg")
@@ -14,51 +14,57 @@ var gDrawing = svg
   .append("g")
   .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-var x = d3.scaleLinear().range([0, iwidth]);
-var y = d3.scaleLinear().range([iheight, 0]);
+var xScale = d3.scaleTime().range([0, iwidth]);
+var yScale = d3.scaleLinear().range([iheight, 0]);
 
 function update(myData) {
   // Data parsing, in case you need it
-  const parseDate = d3.timeParse("%Y/%m/%d");
-  myData.forEach(function (d) {
-    d.date = parseDate(d.date);
-  });
+  const parseDate = d3.timeParse("%m/%d/%Y");
+  myData.forEach(d => d.start = parseDate(d.start));
+  myData.forEach(d => d.end = parseDate(d.end));
 
-  // TODO Update scale domains based on your data variables
-  x.domain([0, 1]);
-  y.domain([0, 1]);
+  xScale.domain([
+          d3.min(myData, d => d.start),
+          d3.max(myData, d => d.start)
+          ]);
+  yScale.domain([3000, d3.max(myData, d => d.calories)]);
 
+  var area = d3.area()
+    .x(d => xScale(d.start))
+    .y0(d => yScale.range()[0])
+    .y1(d => yScale(d.calories));
+  
   gDrawing
+    .append("path")
+    .datum(myData)
+    .attr("class", "area")
+    .attr("d", area);
+
+  var xAxis = gDrawing
     .append("g")
     .attr("transform", `translate(0,${iheight})`)
-    .call(d3.axisBottom(x))
+    .call(d3.axisBottom(xScale)
+          .ticks(20)
+          .tickFormat(d3.timeFormat("%b%y"))
+    )
     .append("text")
     .style("fill", "black")
-    .style("font-size", "12pt")
-    .text("xAxis")
-    .attr("transform", `translate(${iwidth}, ${-20})`);
+    .style("font-size", "10pt")
+    .text("Weeks")
+    .attr("transform", `translate(${iwidth/2}, ${30})`);
 
   gDrawing
     .append("g")
-    .call(d3.axisLeft(y))
+    .call(d3.axisLeft(yScale))
     .append("text")
     .style("fill", "black")
-    .style("font-size", "12pt")
-    .text("yAxis")
-    .attr("transform", `translate(${50}, 0)`);
+    .style("font-size", "10pt")
+    .text("Active Calories")
+    .attr("transform", `translate(${100}, ${15})`);
 
-  var marks = gDrawing.selectAll(".mark").data(myData);
-
-  // Update
-  marks;
-  //TODO change the attribs/style of your updating mark
-
-  // Newly created elements
-  marks.enter().append("circle").attr("class", "mark"); // TODO change for the mark you want to use e.g. rect, path, etc
-  //TODO change the attribs/style of your updating mark
-
-  // Elements to remove
-  marks.exit().remove();
+    console.log("At the end of the callback")
 }
 
-d3.csv("./data/mydata.csv", update);
+d3.json("./data/active_calories_weekly.json", update);
+
+
