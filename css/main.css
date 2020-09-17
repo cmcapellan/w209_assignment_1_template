@@ -9,7 +9,8 @@ body {
 
 .area {
   fill: darksalmon;
-  stroke: none;
+  stroke: #d06744;
+  stroke-width: 2.5px;
 }
 
 th {

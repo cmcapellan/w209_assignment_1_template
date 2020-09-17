@@ -30,6 +30,7 @@ function update(myData) {
   yScale.domain([3000, d3.max(myData, d => d.calories)]);
 
   var area = d3.area()
+    .curve(d3.curveBasis)
     .x(d => xScale(d.start))
     .y0(d => yScale.range()[0])
     .y1(d => yScale(d.calories));
@@ -45,7 +46,13 @@ function update(myData) {
     .attr("transform", `translate(0,${iheight})`)
     .call(d3.axisBottom(xScale)
           .ticks(20)
-          .tickFormat(d3.timeFormat("%b%y"))
+          .tickFormat(function(date){
+            if (d3.timeYear(date) < date) {
+              return d3.timeFormat('%b')(date);
+            } else {
+              return d3.timeFormat('%b %Y')(date);
+            }
+          })
     )
     .append("text")
     .style("fill", "black")
